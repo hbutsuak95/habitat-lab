@@ -6,7 +6,7 @@
 
 import os
 import shutil
-
+import cv2
 import numpy as np
 
 import habitat
@@ -17,7 +17,30 @@ from habitat.utils.visualizations.utils import images_to_video
 
 cv2 = try_cv2_import()
 
-IMAGE_DIR = os.path.join("examples", "images")
+
+import argparse
+
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--out_dir",
+        default=os.path.join("examples", "images"),
+        required=True,
+        help="output directory to store recorded data ",
+    )
+    parser.add_argument(
+        "--num_episodes",
+        type=int,
+        default=100,
+        help="Number of episodes to collect data for",
+    )
+    args = parser.parse_args()
+    return args
+
+
+args = get_args()
+
+IMAGE_DIR = args.out_dir
 if not os.path.exists(IMAGE_DIR):
     os.makedirs(IMAGE_DIR)
 
@@ -47,6 +70,7 @@ def shortest_path_example():
     config.defrost()
     config.TASK.MEASUREMENTS.append("TOP_DOWN_MAP")
     config.freeze()
+
     with SimpleRLEnv(config=config) as env:
         goal_radius = env.episodes[0].goals[0].radius
         if goal_radius is None:
@@ -54,9 +78,9 @@ def shortest_path_example():
         follower = ShortestPathFollower(
             env.habitat_env.sim, goal_radius, False
         )
-
+        # print(env.scene_name)
         print("Environment creation successful")
-        for episode in range(3):
+        for episode in range(args.num_episodes):
             env.reset()
             dirname = os.path.join(
                 IMAGE_DIR, "shortest_path_example", "%02d" % episode
@@ -64,8 +88,12 @@ def shortest_path_example():
             if os.path.exists(dirname):
                 shutil.rmtree(dirname)
             os.makedirs(dirname)
+            os.makedirs(os.path.join(dirname, "images"))
+            os.makedirs(os.path.join(dirname, "topdownmap"))
             print("Agent stepping around inside environment.")
-            images = []
+            # print(env.habitat_env.scene_id)
+            images, actions = [], []
+            step = 0
             while not env.habitat_env.episode_over:
                 best_action = follower.get_next_action(
                     env.habitat_env.current_episode.goals[0].position
@@ -78,6 +106,14 @@ def shortest_path_example():
                 top_down_map = draw_top_down_map(info, im.shape[0])
                 output_im = np.concatenate((im, top_down_map), axis=1)
                 images.append(output_im)
+
+                # write image at step k 
+                cv2.imwrite(os.path.join(dirname, "images", "%03d.png"%step), im)
+                # write top-down map separately at step k 
+                cv2.imwrite(os.path.join(dirname, "topdownmap", "%03d.png"%step), top_down_map)
+                actions.append(best_action)
+                step += 1
+            np.save(os.path.join(dirname, "shortest_path_actions_taken.npy"), np.array(actions))
             images_to_video(images, dirname, "trajectory")
             print("Episode finished")
 

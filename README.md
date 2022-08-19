@@ -13,6 +13,12 @@
 Habitat Lab
 ==============================
 
+
+
+
+
+
+
 Habitat Lab is a modular high-level library for end-to-end development in embodied AI –
 defining embodied AI tasks (e.g. navigation, instruction following, question answering), configuring embodied agents (physical form, sensors, capabilities), training these agents (via imitation or reinforcement learning, or no learning at all as in classical SLAM), and benchmarking their performance on the defined tasks using standard metrics.
 
@@ -103,6 +109,37 @@ If you use the Habitat platform in your research, please cite the [Habitat](http
 
 
 3. Run the example script `python examples/example.py ` which in the end should print out number of steps agent took inside an environment (eg: `Episode finished after 18 steps.`).
+
+
+## Data Collection 
+
+
+1. Download the habitat-test-scenes dataset for pointnav task. 
+
+
+    ```bash
+    python -m habitat_sim.utils.datasets_download --uids habitat_test_scenes --data-path /path/to/data/
+
+    python -m habitat_sim.utils.datasets_download --uids habitat_example_objects --data-path /path/to/data/
+
+    python -m habitat_sim.utils.datasets_download --uids habitat_test_pointnav_dataset --data-path /path/to/data/
+    ```
+2. Set PythonPath
+
+    ```bash
+    
+    export PYTHONPATH=<path to habitat-sim>:$PYTHONPATH
+    ```
+
+3. Using Shortest Path Follower
+
+    ```bash
+    
+    python examples/shortest_path_follower_example.py --out_dir <directory to store data> --num_episodes <# episodes to collect>
+    ```
+
+
+
 
 
 ## Example
