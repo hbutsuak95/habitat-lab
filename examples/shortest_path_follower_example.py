@@ -23,9 +23,12 @@ import argparse
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--config",
+        default="configs/tasks/pointnav.yaml",
+        help="path to config file for the task")
+    parser.add_argument(
         "--out_dir",
-        default=os.path.join("examples", "images"),
-        required=True,
+        default=os.path.join("data_collection", "shortest_path"),
         help="output directory to store recorded data ",
     )
     parser.add_argument(
@@ -66,7 +69,7 @@ def draw_top_down_map(info, output_size):
 
 
 def shortest_path_example():
-    config = habitat.get_config(config_paths="configs/tasks/pointnav.yaml")
+    config = habitat.get_config(config_paths=args.config)
     config.defrost()
     config.TASK.MEASUREMENTS.append("TOP_DOWN_MAP")
     config.freeze()
@@ -82,8 +85,10 @@ def shortest_path_example():
         print("Environment creation successful")
         for episode in range(args.num_episodes):
             env.reset()
+            scene_id = env.habitat_env.current_episode.scene_id 
+            scene_name = scene_id.split("/")[-1][:-4]
             dirname = os.path.join(
-                IMAGE_DIR, "shortest_path_example", "%02d" % episode
+                IMAGE_DIR, args.config.split("/")[-1].split(".")[0], scene_name,  "%02d" % episode
             )
             if os.path.exists(dirname):
                 shutil.rmtree(dirname)

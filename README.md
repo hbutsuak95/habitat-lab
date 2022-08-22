@@ -137,8 +137,26 @@ If you use the Habitat platform in your research, please cite the [Habitat](http
     
     python examples/shortest_path_follower_example.py --out_dir <directory to store data> --num_episodes <# episodes to collect>
     ```
+    This code collects data according to the episode structure specified by the dataset that is loaded for the particular task. 
 
+    A separate code has been added as ipynb file(data_collection_test_script.ipynb) which can collect data automatically/randomly in a specified glb file / environment. 
 
+4. Using RL 
+
+- Ensure that you have habitat-lab installed with habitat-baselines. 
+
+    ```bash
+    
+    python -u habitat_baselines/run.py --exp-config <path-to-training-config-file> --run-type train
+    ```
+    Currently tested for 
+
+    ```bash
+    
+    python -u habitat_baselines/run.py --exp-config habitat_baselines/config/pointnav/ppo_pointnav_example.yaml --run-type train
+    ```
+
+    Currently collects data only according to the specified episode structure in the task dataset. More work is needed to make it generalizable to a specified scene/glb file. 
 
 
 
