@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import torch
 import tqdm
+import cv2
 from gym import spaces
 from torch import nn
 from torch.optim.lr_scheduler import LambdaLR
@@ -91,7 +92,11 @@ class PPOTrainer(BaseRLTrainer):
         # Distributed if the world size would be
         # greater than 1
         self._is_distributed = get_distrib_size()[2] > 1
-
+        
+        self.step = 0 
+        self.episode = 0
+        self.scene_id = None
+        self.scene_name = None
     @property
     def obs_space(self):
         if self._obs_space is None and self.envs is not None:
@@ -482,7 +487,8 @@ class PPOTrainer(BaseRLTrainer):
         observations, rewards_l, dones, infos = [
             list(x) for x in zip(*outputs)
         ]
-
+        cv2.imwrite("%s/train/%s/%02d/%03d.png"%(self.config.VIDEO_DIR, self.scene_name, self.episode, self.step), dict(observations[0])['rgb'])
+        self.step += 1
         self.env_time += time.time() - t_step_env
 
         t_update_stats = time.time()
@@ -739,6 +745,14 @@ class PPOTrainer(BaseRLTrainer):
             else contextlib.suppress()
         ) as writer:
             while not self.is_done():
+                self.episode += 1
+                self.step = 0
+                self.scene_id = self.envs.current_episodes()[0].scene_id
+                self.scene_name = self.scene_id.split("/")[-1][:-4]
+                try:
+                    os.system("mkdir -p %s/train/%s/%02d/"%(self.config.VIDEO_DIR, self.scene_name, self.episode))
+                except:
+                    pass
                 profiling_wrapper.on_start_step()
                 profiling_wrapper.range_push("train update")
 
@@ -1045,7 +1059,6 @@ class PPOTrainer(BaseRLTrainer):
                     == evals_per_ep
                 ):
                     envs_to_pause.append(i)
-
                 if len(self.config.VIDEO_OPTION) > 0:
                     # TODO move normalization / channel changing out of the policy and undo it here
                     frame = observations_to_image(
